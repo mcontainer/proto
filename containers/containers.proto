@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package containers;
+
+message Container {
+    string id = 1;
+    string name = 2;
+    string ip = 3;
+    string network = 4;
+    string service = 5;
+}
+
+message Response {
+    bool success = 1;
+}
+
+service ContainerService {
+    rpc AddNode(Container) returns (Response) {}
+}
