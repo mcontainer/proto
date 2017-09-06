@@ -8,6 +8,7 @@ message ContainerInfo {
     string ip = 3;
     string network = 4;
     string service = 5;
+    string stack = 6;
 }
 
 message ContainerEvent {
