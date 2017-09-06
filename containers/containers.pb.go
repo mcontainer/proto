@@ -8,7 +8,8 @@ It is generated from these files:
 	containers.proto
 
 It has these top-level messages:
-	Container
+	ContainerInfo
+	ContainerEvent
 	Response
 */
 package containers
@@ -33,7 +34,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Container struct {
+type ContainerInfo struct {
 	Id      string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Name    string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	Ip      string `protobuf:"bytes,3,opt,name=ip" json:"ip,omitempty"`
@@ -41,44 +42,84 @@ type Container struct {
 	Service string `protobuf:"bytes,5,opt,name=service" json:"service,omitempty"`
 }
 
-func (m *Container) Reset()                    { *m = Container{} }
-func (m *Container) String() string            { return proto.CompactTextString(m) }
-func (*Container) ProtoMessage()               {}
-func (*Container) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *ContainerInfo) Reset()                    { *m = ContainerInfo{} }
+func (m *ContainerInfo) String() string            { return proto.CompactTextString(m) }
+func (*ContainerInfo) ProtoMessage()               {}
+func (*ContainerInfo) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Container) GetId() string {
+func (m *ContainerInfo) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *Container) GetName() string {
+func (m *ContainerInfo) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *Container) GetIp() string {
+func (m *ContainerInfo) GetIp() string {
 	if m != nil {
 		return m.Ip
 	}
 	return ""
 }
 
-func (m *Container) GetNetwork() string {
+func (m *ContainerInfo) GetNetwork() string {
 	if m != nil {
 		return m.Network
 	}
 	return ""
 }
 
-func (m *Container) GetService() string {
+func (m *ContainerInfo) GetService() string {
 	if m != nil {
 		return m.Service
 	}
 	return ""
+}
+
+type ContainerEvent struct {
+	IpSrc string `protobuf:"bytes,1,opt,name=ipSrc" json:"ipSrc,omitempty"`
+	IpDst string `protobuf:"bytes,2,opt,name=ipDst" json:"ipDst,omitempty"`
+	Stack string `protobuf:"bytes,3,opt,name=stack" json:"stack,omitempty"`
+	Size  uint32 `protobuf:"varint,4,opt,name=size" json:"size,omitempty"`
+}
+
+func (m *ContainerEvent) Reset()                    { *m = ContainerEvent{} }
+func (m *ContainerEvent) String() string            { return proto.CompactTextString(m) }
+func (*ContainerEvent) ProtoMessage()               {}
+func (*ContainerEvent) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *ContainerEvent) GetIpSrc() string {
+	if m != nil {
+		return m.IpSrc
+	}
+	return ""
+}
+
+func (m *ContainerEvent) GetIpDst() string {
+	if m != nil {
+		return m.IpDst
+	}
+	return ""
+}
+
+func (m *ContainerEvent) GetStack() string {
+	if m != nil {
+		return m.Stack
+	}
+	return ""
+}
+
+func (m *ContainerEvent) GetSize() uint32 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
 }
 
 type Response struct {
@@ -88,7 +129,7 @@ type Response struct {
 func (m *Response) Reset()                    { *m = Response{} }
 func (m *Response) String() string            { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()               {}
-func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*Response) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *Response) GetSuccess() bool {
 	if m != nil {
@@ -98,7 +139,8 @@ func (m *Response) GetSuccess() bool {
 }
 
 func init() {
-	proto.RegisterType((*Container)(nil), "containers.Container")
+	proto.RegisterType((*ContainerInfo)(nil), "containers.ContainerInfo")
+	proto.RegisterType((*ContainerEvent)(nil), "containers.ContainerEvent")
 	proto.RegisterType((*Response)(nil), "containers.Response")
 }
 
@@ -113,7 +155,8 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for ContainerService service
 
 type ContainerServiceClient interface {
-	AddNode(ctx context.Context, in *Container, opts ...grpc.CallOption) (*Response, error)
+	AddNode(ctx context.Context, in *ContainerInfo, opts ...grpc.CallOption) (*Response, error)
+	StreamContainerEvents(ctx context.Context, opts ...grpc.CallOption) (ContainerService_StreamContainerEventsClient, error)
 }
 
 type containerServiceClient struct {
@@ -124,7 +167,7 @@ func NewContainerServiceClient(cc *grpc.ClientConn) ContainerServiceClient {
 	return &containerServiceClient{cc}
 }
 
-func (c *containerServiceClient) AddNode(ctx context.Context, in *Container, opts ...grpc.CallOption) (*Response, error) {
+func (c *containerServiceClient) AddNode(ctx context.Context, in *ContainerInfo, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
 	err := grpc.Invoke(ctx, "/containers.ContainerService/AddNode", in, out, c.cc, opts...)
 	if err != nil {
@@ -133,10 +176,42 @@ func (c *containerServiceClient) AddNode(ctx context.Context, in *Container, opt
 	return out, nil
 }
 
+func (c *containerServiceClient) StreamContainerEvents(ctx context.Context, opts ...grpc.CallOption) (ContainerService_StreamContainerEventsClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_ContainerService_serviceDesc.Streams[0], c.cc, "/containers.ContainerService/StreamContainerEvents", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &containerServiceStreamContainerEventsClient{stream}
+	return x, nil
+}
+
+type ContainerService_StreamContainerEventsClient interface {
+	Send(*ContainerEvent) error
+	Recv() (*Response, error)
+	grpc.ClientStream
+}
+
+type containerServiceStreamContainerEventsClient struct {
+	grpc.ClientStream
+}
+
+func (x *containerServiceStreamContainerEventsClient) Send(m *ContainerEvent) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *containerServiceStreamContainerEventsClient) Recv() (*Response, error) {
+	m := new(Response)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Server API for ContainerService service
 
 type ContainerServiceServer interface {
-	AddNode(context.Context, *Container) (*Response, error)
+	AddNode(context.Context, *ContainerInfo) (*Response, error)
+	StreamContainerEvents(ContainerService_StreamContainerEventsServer) error
 }
 
 func RegisterContainerServiceServer(s *grpc.Server, srv ContainerServiceServer) {
@@ -144,7 +219,7 @@ func RegisterContainerServiceServer(s *grpc.Server, srv ContainerServiceServer) 
 }
 
 func _ContainerService_AddNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Container)
+	in := new(ContainerInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -156,9 +231,35 @@ func _ContainerService_AddNode_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/containers.ContainerService/AddNode",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).AddNode(ctx, req.(*Container))
+		return srv.(ContainerServiceServer).AddNode(ctx, req.(*ContainerInfo))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_StreamContainerEvents_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContainerServiceServer).StreamContainerEvents(&containerServiceStreamContainerEventsServer{stream})
+}
+
+type ContainerService_StreamContainerEventsServer interface {
+	Send(*Response) error
+	Recv() (*ContainerEvent, error)
+	grpc.ServerStream
+}
+
+type containerServiceStreamContainerEventsServer struct {
+	grpc.ServerStream
+}
+
+func (x *containerServiceStreamContainerEventsServer) Send(m *Response) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *containerServiceStreamContainerEventsServer) Recv() (*ContainerEvent, error) {
+	m := new(ContainerEvent)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 var _ContainerService_serviceDesc = grpc.ServiceDesc{
@@ -170,24 +271,36 @@ var _ContainerService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _ContainerService_AddNode_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamContainerEvents",
+			Handler:       _ContainerService_StreamContainerEvents_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "containers.proto",
 }
 
 func init() { proto.RegisterFile("containers.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 186 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8f, 0xb1, 0x0e, 0x82, 0x30,
-	0x10, 0x86, 0x05, 0x51, 0xe0, 0x06, 0x43, 0x1a, 0x4d, 0x1a, 0x27, 0x43, 0x1c, 0x9c, 0x18, 0x74,
-	0x71, 0x35, 0xae, 0xc6, 0x01, 0x9f, 0x00, 0xdb, 0x1b, 0x1a, 0x63, 0xdb, 0xb4, 0xa8, 0xaf, 0x6f,
-	0x3c, 0x28, 0xb2, 0xf5, 0xff, 0xee, 0x6b, 0xee, 0x7e, 0x28, 0x84, 0xd1, 0x6d, 0xa3, 0x34, 0x3a,
-	0x5f, 0x59, 0x67, 0x5a, 0xc3, 0xe0, 0x4f, 0x4a, 0x0f, 0xf9, 0x39, 0x24, 0xb6, 0x80, 0x58, 0x49,
-	0x1e, 0x6d, 0xa2, 0x5d, 0x5e, 0xc7, 0x4a, 0x32, 0x06, 0x89, 0x6e, 0x9e, 0xc8, 0x63, 0x22, 0xf4,
-	0x26, 0xc7, 0xf2, 0x69, 0xef, 0x58, 0xc6, 0x21, 0xd5, 0xd8, 0x7e, 0x8c, 0x7b, 0xf0, 0x84, 0x60,
-	0x88, 0xbf, 0x89, 0x47, 0xf7, 0x56, 0x02, 0xf9, 0xac, 0x9b, 0xf4, 0xb1, 0xdc, 0x42, 0x56, 0xa3,
-	0xb7, 0x46, 0x7b, 0x24, 0xeb, 0x25, 0x04, 0x7a, 0x4f, 0x8b, 0xb3, 0x3a, 0xc4, 0xfd, 0x05, 0x8a,
-	0xe1, 0xb4, 0x5b, 0xf7, 0x93, 0x1d, 0x21, 0x3d, 0x49, 0x79, 0x35, 0x12, 0xd9, 0xaa, 0x1a, 0x15,
-	0x1b, 0xc4, 0xf5, 0x72, 0x8c, 0xc3, 0x96, 0x72, 0x72, 0x9f, 0x53, 0xf7, 0xc3, 0x37, 0x00, 0x00,
-	0xff, 0xff, 0xf7, 0xc7, 0xe9, 0x86, 0x0f, 0x01, 0x00, 0x00,
+	// 269 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0x41, 0x4b, 0xfb, 0x40,
+	0x10, 0xc5, 0xff, 0xc9, 0xbf, 0xb5, 0x75, 0xa0, 0xa5, 0x0c, 0x15, 0xd6, 0x9e, 0x24, 0x78, 0xe8,
+	0xa9, 0x88, 0x5e, 0xbd, 0x88, 0x7a, 0xf0, 0xa2, 0x90, 0x7c, 0x82, 0xb8, 0x99, 0xc2, 0x52, 0xba,
+	0x1b, 0x76, 0xd6, 0x16, 0xfc, 0x36, 0x7e, 0x53, 0xc9, 0xec, 0xa6, 0xb6, 0xa0, 0xb7, 0x7d, 0xef,
+	0x0d, 0xf3, 0x7e, 0x99, 0xc0, 0x4c, 0x3b, 0x1b, 0x6a, 0x63, 0xc9, 0xf3, 0xaa, 0xf5, 0x2e, 0x38,
+	0x84, 0x1f, 0xa7, 0xd8, 0xc3, 0xe4, 0xb1, 0x57, 0x2f, 0x76, 0xed, 0x70, 0x0a, 0xb9, 0x69, 0x54,
+	0x76, 0x95, 0x2d, 0xcf, 0xcb, 0xdc, 0x34, 0x88, 0x30, 0xb0, 0xf5, 0x96, 0x54, 0x2e, 0x8e, 0xbc,
+	0x65, 0xa6, 0x55, 0xff, 0xd3, 0x4c, 0x8b, 0x0a, 0x46, 0x96, 0xc2, 0xde, 0xf9, 0x8d, 0x1a, 0x88,
+	0xd9, 0xcb, 0x2e, 0x61, 0xf2, 0x3b, 0xa3, 0x49, 0x0d, 0x63, 0x92, 0x64, 0xb1, 0x86, 0xe9, 0xa1,
+	0xf8, 0x79, 0x47, 0x36, 0xe0, 0x1c, 0x86, 0xa6, 0xad, 0xbc, 0x4e, 0xe5, 0x51, 0x44, 0xf7, 0x89,
+	0x43, 0x02, 0x88, 0xa2, 0x73, 0x39, 0xd4, 0x7a, 0x93, 0x20, 0xa2, 0xe8, 0x58, 0xd9, 0x7c, 0x92,
+	0x40, 0x4c, 0x4a, 0x79, 0x17, 0xd7, 0x30, 0x2e, 0x89, 0x5b, 0x67, 0x99, 0x84, 0xe6, 0x43, 0x6b,
+	0x62, 0x96, 0x8e, 0x71, 0xd9, 0xcb, 0xdb, 0xaf, 0x0c, 0x66, 0x07, 0x9c, 0x2a, 0x22, 0xe2, 0x3d,
+	0x8c, 0x1e, 0x9a, 0xe6, 0xd5, 0x35, 0x84, 0x97, 0xab, 0xa3, 0x2b, 0x9e, 0x1c, 0x6c, 0x31, 0x3f,
+	0x8e, 0xfa, 0xaa, 0xe2, 0x1f, 0xbe, 0xc1, 0x45, 0x15, 0x3c, 0xd5, 0xdb, 0xd3, 0xcf, 0x64, 0x5c,
+	0xfc, 0xba, 0x4b, 0xc2, 0xbf, 0x96, 0x2d, 0xb3, 0x9b, 0xec, 0xfd, 0x4c, 0xfe, 0xde, 0xdd, 0x77,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0xa6, 0xdb, 0x7d, 0xae, 0xd1, 0x01, 0x00, 0x00,
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package containers;
 
-message Container {
+message ContainerInfo {
     string id = 1;
     string name = 2;
     string ip = 3;
@@ -10,10 +10,21 @@ message Container {
     string service = 5;
 }
 
+message ContainerEvent {
+    string ipSrc = 1;
+    string ipDst = 2;
+    string stack = 3;
+    uint32 size = 4;
+}
+
 message Response {
     bool success = 1;
 }
 
 service ContainerService {
-    rpc AddNode(Container) returns (Response) {}
+    
+    rpc AddNode(ContainerInfo) returns (Response) {}
+
+    rpc StreamContainerEvents(stream ContainerEvent) returns (stream Response) {}
+
 }
